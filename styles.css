@@ -1,0 +1,167 @@
+:root {
+  --cream: #F7F1E6;
+  --ink: #2C2A26;
+  --red: #A83A2C;
+  --cobalt: #1F4FA8;
+  --muted: #8A7F6C;
+  --hairline: #DCCFB8;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-ui: 'Archivo', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-ui);
+  background-color: var(--cream);
+  color: var(--ink);
+  padding: 1rem;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-variation-settings: 'SOFT' 80, 'WONK' 1, 'opsz' 120;
+  font-weight: 400;
+}
+
+a {
+  color: var(--cobalt);
+  text-decoration: none;
+}
+
+#toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+button {
+  font-family: var(--font-ui);
+  background-color: var(--cream);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  min-height: 44px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+#toolbar-status {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.delete-button {
+  margin-top: 1.25rem;
+}
+
+#recipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background-color: var(--cream);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 16px;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--cobalt);
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+}
+
+.detail-photo {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 0.75rem;
+}
+
+.detail-photo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 6%;
+  object-fit: cover;
+}
+
+.detail-photo-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@media (max-width: 399px) {
+  .detail-photo {
+    max-width: 100%;
+  }
+}
+
+.detail-heading {
+  font-family: var(--font-display);
+  font-variation-settings: 'SOFT' 80, 'WONK' 1, 'opsz' 120;
+  font-weight: 400;
+  font-size: 1.1rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.card-number {
+  color: var(--red);
+  letter-spacing: 0.15em;
+  font-size: 0.75rem;
+}
+
+.card-title {
+  margin: 0.25rem 0;
+  font-size: 20px;
+}
+
+.card-serves {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.card-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.meta-label {
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  font-size: 0.6875rem;
+}
+
+.meta-value {
+  color: var(--ink);
+}
+
+@media (min-width: 600px) {
+  body {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+}

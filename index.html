@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F7F1E6">
+  <title>MBM Kitchen</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Fraunces:SOFT,WONK,opsz,wght@0..100,0..1,9..144,400;0..100,0..1,9..144,600&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header id="page-header" style="display:flex;justify-content:space-between;align-items:center">
+    <h1>MBM Kitchen</h1>
+    <div id="menu-wrap" style="position:relative">
+      <button id="btn-menu" type="button" aria-label="Menu" aria-haspopup="true" aria-expanded="false" style="width:44px;min-height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" style="stroke:var(--ink);stroke-width:2">
+          <line x1="2" y1="5" x2="18" y2="5"></line>
+          <line x1="2" y1="10" x2="18" y2="10"></line>
+          <line x1="2" y1="15" x2="18" y2="15"></line>
+        </svg>
+      </button>
+      <div id="menu-panel" hidden style="position:absolute;right:0;top:calc(100% + 4px);min-width:180px;background-color:var(--cream);border:1px solid var(--hairline);border-radius:4px;overflow:hidden;z-index:10">
+        <button id="btn-export" type="button" style="display:block;width:100%;text-align:left;border:none;border-bottom:1px solid var(--hairline);border-radius:0">Export</button>
+        <button id="btn-reset" type="button" style="display:block;width:100%;text-align:left;border:none;border-radius:0">Reset from file</button>
+      </div>
+    </div>
+  </header>
+  <div id="toolbar">
+    <button id="btn-add" type="button">Add recipe</button>
+  </div>
+  <div id="recipe-list"></div>
+  <div id="recipe-detail"></div>
+  <div id="recipe-form"></div>
+  <script src="data.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>

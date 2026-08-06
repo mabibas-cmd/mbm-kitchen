@@ -1,0 +1,976 @@
+const list = document.getElementById("recipe-list");
+const detail = document.getElementById("recipe-detail");
+const form = document.getElementById("recipe-form");
+const toolbar = document.getElementById("toolbar");
+
+const STORAGE_KEY = "mbm-recipes";
+
+// Maps each format value to a Tabler icon name, so the names can be changed in
+// one place.
+const formatIcons = {
+  pasta: "ti-bowl",
+  rice: "ti-bowl",
+  soup: "ti-soup",
+  salad: "ti-salad",
+  roast: "ti-meat",
+  bread: "ti-bread",
+  pie: "ti-chef-hat",
+  "stir fry": "ti-tools-kitchen-2",
+  other: "ti-tools-kitchen-2",
+  chocolate: "ti-cookie",
+  fruit: "ti-apple",
+  custard: "ti-egg",
+  pastry: "ti-cake",
+  frozen: "ti-ice-cream"
+};
+
+const proteinColours = {
+  seafood: "var(--cobalt)",
+  meat: "var(--red)",
+  chicken: "var(--red)",
+  veg: "var(--ink)",
+  dessert: "var(--red)"
+};
+
+// Picks the hand-drawn frame overlay for a recipe. Desserts always use the ink
+// frame; otherwise it follows the protein. Any protein not listed falls back to
+// the ink frame.
+function frameFor(recipe) {
+  if (recipe.type === "dessert") return "frame-ink.png";
+  if (recipe.protein === "seafood") return "frame-cobalt.png";
+  if (recipe.protein === "meat" || recipe.protein === "chicken") return "frame-red.png";
+  if (recipe.protein === "veg") return "frame-ink.png";
+  return "frame-ink.png";
+}
+
+function seedStore() {
+  return JSON.parse(JSON.stringify(recipes));
+}
+
+function loadStore() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY));
+}
+
+function saveStore(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+if (localStorage.getItem(STORAGE_KEY) === null) {
+  saveStore(seedStore());
+}
+
+function countUnexported() {
+  return loadStore().filter((r) => r.unexported === true).length;
+}
+
+// Recipes created on the device carry unexported: true; seeded recipes do not.
+function addRecipe(recipe) {
+  const data = loadStore();
+  data.push({ ...recipe, unexported: true });
+  saveStore(data);
+  renderList();
+}
+
+function renderNotice() {
+  const count = countUnexported();
+  let notice = document.getElementById("unexported-notice");
+  if (count > 0) {
+    if (!notice) {
+      notice = document.createElement("div");
+      notice.id = "unexported-notice";
+      notice.style.color = "var(--red)";
+      notice.style.fontSize = "0.875rem";
+      notice.style.fontFamily = "var(--font-ui)";
+      notice.style.marginBottom = "12px";
+      list.parentNode.insertBefore(notice, list);
+    }
+    notice.textContent = count + " recipes not yet saved to data.js";
+    notice.style.display = "";
+  } else if (notice) {
+    notice.style.display = "none";
+  }
+}
+
+function formatNumber(n) {
+  return "NO. " + String(n).padStart(3, "0");
+}
+
+let currentLang = "en";
+
+// Returns the value for the chosen language, falling back to English when a
+// translation is missing or empty. Tolerates the legacy (pre-translation) shape
+// where the field is a plain string or array.
+function pick(field, lang) {
+  if (field === null || field === undefined) return field;
+  if (typeof field === "string" || Array.isArray(field)) return field;
+  const value = field[lang];
+  const empty =
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0);
+  return empty ? field.en : value;
+}
+
+function showStatus(message) {
+  let status = document.getElementById("toolbar-status");
+  if (!status) {
+    status = document.createElement("div");
+    status.id = "toolbar-status";
+    toolbar.append(status);
+  }
+  status.textContent = message;
+  setTimeout(() => {
+    if (status.textContent === message) status.textContent = "";
+  }, 2500);
+}
+
+function metaItem(label, value) {
+  const item = document.createElement("div");
+  item.className = "meta-item";
+
+  const labelEl = document.createElement("div");
+  labelEl.className = "meta-label";
+  labelEl.textContent = label;
+
+  const valueEl = document.createElement("div");
+  valueEl.className = "meta-value";
+  valueEl.textContent = value;
+
+  item.append(labelEl, valueEl);
+  return item;
+}
+
+function metaRow(recipe) {
+  const meta = document.createElement("div");
+  meta.className = "card-meta";
+  meta.append(
+    metaItem("ACTIVE", recipe.activeMinutes),
+    metaItem("TOTAL", recipe.totalMinutes),
+    metaItem("POTS", recipe.pots)
+  );
+  return meta;
+}
+
+function showList() {
+  detail.innerHTML = "";
+  detail.style.display = "none";
+  form.innerHTML = "";
+  form.style.display = "none";
+  list.style.display = "";
+}
+
+function showDetail(recipe) {
+  detail.innerHTML = "";
+
+  const back = document.createElement("a");
+  back.className = "back-link";
+  back.href = "#";
+  back.textContent = "← All recipes";
+  back.addEventListener("click", (event) => {
+    event.preventDefault();
+    showList();
+  });
+
+  const langToggle = document.createElement("div");
+  langToggle.className = "lang-toggle";
+  langToggle.style.display = "flex";
+  langToggle.style.gap = "4px";
+  langToggle.style.marginBottom = "0.75rem";
+  ["en", "pt", "it"].forEach((code) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "lang-option";
+    option.textContent = code.toUpperCase();
+    if (code === currentLang) option.style.color = "var(--red)";
+    option.addEventListener("click", () => {
+      currentLang = code;
+      showDetail(recipe);
+    });
+    langToggle.append(option);
+  });
+
+  let photoEl = null;
+  if (recipe.photo) {
+    photoEl = document.createElement("div");
+    photoEl.className = "detail-photo";
+
+    const img = document.createElement("img");
+    img.className = "detail-photo-img";
+    img.src = "photos/" + recipe.photo;
+    img.alt = "";
+
+    const frame = document.createElement("img");
+    frame.className = "detail-photo-frame";
+    frame.src = "photos/" + frameFor(recipe);
+    frame.alt = "";
+
+    photoEl.append(img, frame);
+  }
+
+  const number = document.createElement("div");
+  number.className = "card-number";
+  number.textContent = formatNumber(recipe.number);
+
+  const title = document.createElement("h2");
+  title.className = "card-title";
+  title.textContent = pick(recipe.title, currentLang);
+
+  const serves = document.createElement("div");
+  serves.className = "card-serves";
+  serves.textContent = "serves " + recipe.servings;
+
+  // Cuisine / season labels: small, letterspaced, muted. Omit cuisine when blank
+  // and season when blank or "all year".
+  const tags = [];
+  if (recipe.cuisine) tags.push(recipe.cuisine);
+  if (recipe.season && recipe.season !== "all year") tags.push(recipe.season);
+  let tagsEl = null;
+  if (tags.length) {
+    tagsEl = document.createElement("div");
+    tagsEl.style.display = "flex";
+    tagsEl.style.gap = "1rem";
+    tagsEl.style.marginTop = "0.5rem";
+    tags.forEach((t) => {
+      const span = document.createElement("span");
+      span.textContent = t;
+      span.style.color = "var(--muted)";
+      span.style.fontFamily = "var(--font-ui)";
+      span.style.fontSize = "0.6875rem";
+      span.style.letterSpacing = "0.15em";
+      span.style.textTransform = "uppercase";
+      tagsEl.append(span);
+    });
+  }
+
+  const ingredientsHeading = document.createElement("h3");
+  ingredientsHeading.className = "detail-heading";
+  ingredientsHeading.textContent = "Ingredients";
+
+  const ingredients = document.createElement("ul");
+  recipe.ingredients.forEach((ing) => {
+    const li = document.createElement("li");
+    const parts = [ing.amount];
+    if (ing.unit !== null) parts.push(ing.unit);
+    parts.push(pick(ing.item, currentLang));
+    li.textContent = parts.join(" ");
+    ingredients.append(li);
+  });
+
+  const stepsHeading = document.createElement("h3");
+  stepsHeading.className = "detail-heading";
+  stepsHeading.textContent = "Steps";
+
+  const steps = document.createElement("ol");
+  pick(recipe.steps, currentLang).forEach((step) => {
+    const li = document.createElement("li");
+    li.textContent = step;
+    steps.append(li);
+  });
+
+  const editButton = document.createElement("button");
+  editButton.type = "button";
+  editButton.className = "edit-button";
+  editButton.textContent = "Edit";
+  editButton.style.marginTop = "1.25rem";
+  editButton.style.marginRight = "8px";
+  editButton.addEventListener("click", () => openForm("edit", recipe));
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "delete-button";
+  deleteButton.textContent = "Delete";
+  deleteButton.addEventListener("click", () => {
+    if (!confirm('Delete "' + pick(recipe.title, currentLang) + '"?')) return;
+    const data = loadStore().filter((r) => r.id !== recipe.id);
+    saveStore(data);
+    renderList();
+    showList();
+  });
+
+  const nodes = [back, langToggle];
+  if (photoEl) nodes.push(photoEl);
+  nodes.push(number, title, serves, metaRow(recipe));
+  if (tagsEl) nodes.push(tagsEl);
+  nodes.push(
+    ingredientsHeading,
+    ingredients,
+    stepsHeading,
+    steps,
+    editButton,
+    deleteButton
+  );
+  detail.append(...nodes);
+
+  form.innerHTML = "";
+  form.style.display = "none";
+  list.style.display = "none";
+  detail.style.display = "";
+}
+
+function renderList() {
+  list.innerHTML = "";
+  loadStore().forEach((recipe) => {
+    const card = document.createElement("article");
+    card.className = "card";
+
+    // Format icon (and a matching rule above it), coloured by protein — or red
+    // for desserts. Fall back to ink for any protein not in the mapping.
+    const colour =
+      recipe.type === "dessert"
+        ? proteinColours.dessert
+        : proteinColours[recipe.protein] || "var(--ink)";
+
+    const rule = document.createElement("div");
+    rule.style.height = "1px";
+    rule.style.width = "100%";
+    rule.style.backgroundColor = colour;
+    rule.style.marginBottom = "0.5rem";
+
+    const iconWrap = document.createElement("div");
+    iconWrap.style.textAlign = "center";
+    iconWrap.style.marginBottom = "0.5rem";
+    const icon = document.createElement("i");
+    icon.className = "ti " + formatIcons[recipe.format];
+    icon.style.fontSize = "24px";
+    icon.style.color = colour;
+    iconWrap.append(icon);
+
+    const number = document.createElement("div");
+    number.className = "card-number";
+    number.textContent = formatNumber(recipe.number);
+
+    const title = document.createElement("h2");
+    title.className = "card-title";
+    title.textContent = pick(recipe.title, currentLang);
+
+    const serves = document.createElement("div");
+    serves.className = "card-serves";
+    serves.textContent = "serves " + recipe.servings;
+
+    card.append(rule, iconWrap, number, title, serves, metaRow(recipe));
+    card.addEventListener("click", () => showDetail(recipe));
+    list.append(card);
+  });
+  renderNotice();
+}
+
+function exportRecipes() {
+  const cleaned = loadStore().map((r) => {
+    const copy = { ...r };
+    delete copy.unexported;
+    return copy;
+  });
+  const js = "const recipes = " + JSON.stringify(cleaned, null, 2) + ";";
+  navigator.clipboard.writeText(js).then(
+    () => {
+      saveStore(cleaned);
+      renderList();
+      showStatus("Copied to clipboard");
+    },
+    () => showStatus("Copy failed")
+  );
+}
+
+function resetRecipes() {
+  const unexported = countUnexported();
+  if (unexported > 0) {
+    if (!confirm(unexported + " recipes have not been saved to data.js and will be lost. Continue?")) return;
+    if (!confirm("Are you sure? This cannot be undone.")) return;
+  } else {
+    if (!confirm("Reset all recipes from the file? This discards any changes.")) return;
+  }
+  saveStore(seedStore());
+  renderList();
+  showList();
+  showStatus("Reset from file");
+}
+
+// ---- Add / edit form ----
+
+const DRAFT_KEY = "mbm-draft";
+
+function loadDraft() {
+  const raw = localStorage.getItem(DRAFT_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function saveDraft(state) {
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+}
+
+function slugify(text) {
+  return String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function nextNumber() {
+  const used = new Set(
+    loadStore()
+      .map((r) => r.number)
+      .filter((n) => typeof n === "number")
+  );
+  let n = 1;
+  while (used.has(n)) n++;
+  return n;
+}
+
+const CUISINE_OPTIONS = [
+  "Italian",
+  "Brazilian",
+  "Greek",
+  "French",
+  "Spanish",
+  "Middle Eastern",
+  "Asian",
+  "Mexican",
+  "British",
+  "Other"
+];
+const SEASON_OPTIONS = ["all year", "summer", "winter"];
+const FORMAT_SAVOURY = ["pasta", "rice", "soup", "salad", "roast", "bread", "pie", "stir fry", "other"];
+const FORMAT_DESSERT = ["chocolate", "fruit", "custard", "pastry", "frozen", "other"];
+
+function formatOptionsFor(type) {
+  return type === "dessert" ? FORMAT_DESSERT : FORMAT_SAVOURY;
+}
+
+// Returns the current season for the southern hemisphere: December–February is
+// summer, June–August is winter, and other months return "all year".
+// Not used anywhere yet.
+function currentSeasonSouthern() {
+  const month = new Date().getMonth() + 1;
+  if (month === 12 || month === 1 || month === 2) return "summer";
+  if (month >= 6 && month <= 8) return "winter";
+  return "all year";
+}
+
+function blankRow() {
+  return { amount: "", unit: "none", item: "", staple: false };
+}
+
+function blankState() {
+  return {
+    mode: "add",
+    id: null,
+    number: null,
+    title: "",
+    photo: "",
+    servings: "",
+    type: "savoury",
+    protein: "none",
+    format: "",
+    cuisine: "",
+    season: "all year",
+    activeMinutes: "",
+    totalMinutes: "",
+    pots: "",
+    pausable: false,
+    makeAhead: false,
+    ingredients: [blankRow()],
+    steps: ""
+  };
+}
+
+function stateFromRecipe(recipe) {
+  return {
+    mode: "edit",
+    id: recipe.id,
+    number: recipe.number,
+    title: pick(recipe.title, "en") || "",
+    photo: recipe.photo == null ? "" : recipe.photo,
+    servings: recipe.servings == null ? "" : recipe.servings,
+    type: recipe.type || "savoury",
+    protein: recipe.protein == null ? "none" : recipe.protein,
+    format: recipe.format || "",
+    cuisine: recipe.cuisine || "",
+    season: recipe.season || "all year",
+    activeMinutes: recipe.activeMinutes == null ? "" : recipe.activeMinutes,
+    totalMinutes: recipe.totalMinutes == null ? "" : recipe.totalMinutes,
+    pots: recipe.pots == null ? "" : recipe.pots,
+    pausable: !!recipe.pausable,
+    makeAhead: !!recipe.makeAhead,
+    ingredients: recipe.ingredients.map((ing) => ({
+      amount: ing.amount == null ? "" : ing.amount,
+      unit: ing.unit == null ? "none" : ing.unit,
+      item: pick(ing.item, "en") || "",
+      staple: !!ing.staple
+    })),
+    steps: (pick(recipe.steps, "en") || []).join("\n")
+  };
+}
+
+function styleField(el) {
+  el.style.width = "100%";
+  el.style.minHeight = "44px";
+  el.style.boxSizing = "border-box";
+  el.style.border = "1px solid var(--hairline)";
+  el.style.borderRadius = "4px";
+  el.style.fontFamily = "var(--font-ui)";
+  el.style.fontSize = "1rem";
+  el.style.padding = "8px";
+  el.style.backgroundColor = "var(--cream)";
+  el.style.color = "var(--ink)";
+  return el;
+}
+
+function fieldLabel(text) {
+  const label = document.createElement("label");
+  label.textContent = text;
+  label.style.display = "block";
+  label.style.marginBottom = "4px";
+  label.style.color = "var(--muted)";
+  label.style.fontFamily = "var(--font-ui)";
+  label.style.fontSize = "0.8125rem";
+  return label;
+}
+
+function labelWrap(text, field) {
+  const wrap = document.createElement("div");
+  wrap.style.marginBottom = "12px";
+  wrap.append(fieldLabel(text), field);
+  return wrap;
+}
+
+function checkboxField(text, checked, onChange) {
+  const wrap = document.createElement("div");
+  wrap.style.marginBottom = "12px";
+  const row = document.createElement("label");
+  row.style.display = "flex";
+  row.style.alignItems = "center";
+  row.style.gap = "8px";
+  row.style.minHeight = "44px";
+  row.style.color = "var(--muted)";
+  row.style.fontFamily = "var(--font-ui)";
+  row.style.fontSize = "0.8125rem";
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.checked = checked;
+  cb.addEventListener("change", () => onChange(cb.checked));
+  const span = document.createElement("span");
+  span.textContent = text;
+  row.append(cb, span);
+  wrap.append(row);
+  return wrap;
+}
+
+function makeSelect(options, value) {
+  const select = document.createElement("select");
+  const opts = options.slice();
+  if (value !== "" && value != null && !opts.includes(value)) {
+    // Preserve an existing value that isn't one of the standard options.
+    opts.push(value);
+  }
+  opts.forEach((opt) => {
+    const option = document.createElement("option");
+    option.value = opt;
+    option.textContent = opt;
+    select.append(option);
+  });
+  select.value = value;
+  return select;
+}
+
+function buildForm(state) {
+  form.innerHTML = "";
+  const persist = () => saveDraft(state);
+
+  const cancel = document.createElement("a");
+  cancel.className = "back-link";
+  cancel.href = "#";
+  cancel.textContent = "Cancel";
+  cancel.addEventListener("click", (event) => {
+    event.preventDefault();
+    cancelForm(state);
+  });
+
+  const heading = document.createElement("h2");
+  heading.className = "card-title";
+  heading.textContent = state.mode === "edit" ? "Edit recipe" : "Add recipe";
+
+  const titleInput = styleField(document.createElement("input"));
+  titleInput.type = "text";
+  titleInput.value = state.title;
+  titleInput.addEventListener("input", () => {
+    state.title = titleInput.value;
+    persist();
+  });
+
+  const photoInput = styleField(document.createElement("input"));
+  photoInput.type = "text";
+  photoInput.value = state.photo;
+  photoInput.addEventListener("input", () => {
+    state.photo = photoInput.value;
+    persist();
+  });
+
+  const servingsInput = styleField(document.createElement("input"));
+  servingsInput.type = "number";
+  servingsInput.value = state.servings;
+  servingsInput.addEventListener("input", () => {
+    state.servings = servingsInput.value;
+    persist();
+  });
+
+  const typeSelect = styleField(makeSelect(["savoury", "dessert"], state.type));
+  typeSelect.addEventListener("change", () => {
+    state.type = typeSelect.value;
+    populateFormat();
+    persist();
+  });
+
+  const proteinSelect = styleField(
+    makeSelect(["chicken", "seafood", "meat", "veg", "none"], state.protein)
+  );
+  proteinSelect.addEventListener("change", () => {
+    state.protein = proteinSelect.value;
+    persist();
+  });
+
+  const formatSelect = styleField(document.createElement("select"));
+  function populateFormat() {
+    const opts = formatOptionsFor(state.type);
+    formatSelect.innerHTML = "";
+    opts.forEach((opt) => {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt;
+      formatSelect.append(option);
+    });
+    if (!opts.includes(state.format)) {
+      state.format = opts[0];
+    }
+    formatSelect.value = state.format;
+  }
+  populateFormat();
+  formatSelect.addEventListener("change", () => {
+    state.format = formatSelect.value;
+    persist();
+  });
+
+  const cuisineSelect = styleField(makeSelect([""].concat(CUISINE_OPTIONS), state.cuisine));
+  cuisineSelect.addEventListener("change", () => {
+    state.cuisine = cuisineSelect.value;
+    persist();
+  });
+
+  const seasonSelect = styleField(makeSelect(SEASON_OPTIONS, state.season || "all year"));
+  seasonSelect.addEventListener("change", () => {
+    state.season = seasonSelect.value;
+    persist();
+  });
+
+  const activeInput = styleField(document.createElement("input"));
+  activeInput.type = "number";
+  activeInput.value = state.activeMinutes;
+  activeInput.addEventListener("input", () => {
+    state.activeMinutes = activeInput.value;
+    persist();
+  });
+
+  const totalInput = styleField(document.createElement("input"));
+  totalInput.type = "number";
+  totalInput.value = state.totalMinutes;
+  totalInput.addEventListener("input", () => {
+    state.totalMinutes = totalInput.value;
+    persist();
+  });
+
+  const potsInput = styleField(document.createElement("input"));
+  potsInput.type = "number";
+  potsInput.value = state.pots;
+  potsInput.addEventListener("input", () => {
+    state.pots = potsInput.value;
+    persist();
+  });
+
+  const pausableField = checkboxField("Pausable", state.pausable, (v) => {
+    state.pausable = v;
+    persist();
+  });
+  const makeAheadField = checkboxField("Make ahead", state.makeAhead, (v) => {
+    state.makeAhead = v;
+    persist();
+  });
+
+  const ingredientsHeading = document.createElement("h3");
+  ingredientsHeading.className = "detail-heading";
+  ingredientsHeading.textContent = "Ingredients";
+
+  const rowsContainer = document.createElement("div");
+
+  function ensureTrailingBlank() {
+    const last = state.ingredients[state.ingredients.length - 1];
+    if (!last || last.item.trim() !== "") {
+      const next = blankRow();
+      state.ingredients.push(next);
+      addRow(next);
+    }
+  }
+
+  function addRow(rowState) {
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.flexWrap = "wrap";
+    row.style.gap = "8px";
+    row.style.marginBottom = "8px";
+    row.style.alignItems = "center";
+
+    const amount = styleField(document.createElement("input"));
+    amount.type = "number";
+    amount.placeholder = "amount";
+    amount.value = rowState.amount;
+    amount.style.width = "80px";
+    amount.style.flex = "0 0 auto";
+    amount.addEventListener("input", () => {
+      rowState.amount = amount.value;
+      persist();
+    });
+
+    const unit = styleField(makeSelect(["g", "kg", "ml", "l", "tbsp", "tsp", "none"], rowState.unit));
+    unit.style.width = "auto";
+    unit.style.flex = "0 0 auto";
+    unit.addEventListener("change", () => {
+      rowState.unit = unit.value;
+      persist();
+    });
+
+    const item = styleField(document.createElement("input"));
+    item.type = "text";
+    item.placeholder = "item";
+    item.value = rowState.item;
+    item.style.flex = "1 1 120px";
+    item.style.width = "auto";
+    item.addEventListener("input", () => {
+      rowState.item = item.value;
+      persist();
+      if (
+        state.ingredients[state.ingredients.length - 1] === rowState &&
+        item.value.trim() !== ""
+      ) {
+        ensureTrailingBlank();
+      }
+    });
+
+    const stapleWrap = document.createElement("label");
+    stapleWrap.style.display = "inline-flex";
+    stapleWrap.style.alignItems = "center";
+    stapleWrap.style.gap = "4px";
+    stapleWrap.style.minHeight = "44px";
+    stapleWrap.style.color = "var(--muted)";
+    stapleWrap.style.fontFamily = "var(--font-ui)";
+    stapleWrap.style.fontSize = "0.8125rem";
+    const staple = document.createElement("input");
+    staple.type = "checkbox";
+    staple.checked = rowState.staple;
+    staple.addEventListener("change", () => {
+      rowState.staple = staple.checked;
+      persist();
+    });
+    stapleWrap.append(staple, document.createTextNode("staple"));
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", "Remove ingredient");
+    remove.style.width = "44px";
+    remove.style.minHeight = "44px";
+    remove.style.padding = "0";
+    remove.style.flex = "0 0 auto";
+    remove.addEventListener("click", () => {
+      const idx = state.ingredients.indexOf(rowState);
+      if (idx !== -1) state.ingredients.splice(idx, 1);
+      row.remove();
+      ensureTrailingBlank();
+      persist();
+    });
+
+    row.append(amount, unit, item, stapleWrap, remove);
+    rowsContainer.append(row);
+  }
+
+  state.ingredients.forEach((rowState) => addRow(rowState));
+  ensureTrailingBlank();
+
+  const stepsHeading = document.createElement("h3");
+  stepsHeading.className = "detail-heading";
+  stepsHeading.textContent = "Steps";
+
+  const stepsArea = styleField(document.createElement("textarea"));
+  stepsArea.rows = 6;
+  stepsArea.style.minHeight = "120px";
+  stepsArea.style.resize = "vertical";
+  stepsArea.placeholder = "One step per line";
+  stepsArea.value = state.steps;
+  stepsArea.addEventListener("input", () => {
+    state.steps = stepsArea.value;
+    persist();
+  });
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.textContent = "Save";
+  saveButton.style.marginTop = "1.25rem";
+  saveButton.addEventListener("click", () => saveForm(state));
+
+  form.append(
+    cancel,
+    heading,
+    labelWrap("Title", titleInput),
+    labelWrap("Photo filename", photoInput),
+    labelWrap("Servings", servingsInput),
+    labelWrap("Type", typeSelect),
+    labelWrap("Protein", proteinSelect),
+    labelWrap("Format", formatSelect),
+    labelWrap("Cuisine", cuisineSelect),
+    labelWrap("Season", seasonSelect),
+    labelWrap("Active minutes", activeInput),
+    labelWrap("Total minutes", totalInput),
+    labelWrap("Pots", potsInput),
+    pausableField,
+    makeAheadField,
+    ingredientsHeading,
+    rowsContainer,
+    stepsHeading,
+    stepsArea,
+    saveButton
+  );
+}
+
+function showForm() {
+  list.style.display = "none";
+  detail.innerHTML = "";
+  detail.style.display = "none";
+  form.style.display = "";
+}
+
+function openForm(mode, recipe) {
+  const draft = loadDraft();
+  let state;
+  if (mode === "add") {
+    state = draft && draft.mode === "add" ? draft : blankState();
+  } else if (draft && draft.mode === "edit" && draft.id === recipe.id) {
+    state = draft;
+  } else {
+    state = stateFromRecipe(recipe);
+  }
+  saveDraft(state);
+  buildForm(state);
+  showForm();
+}
+
+function cancelForm(state) {
+  clearDraft();
+  if (state.mode === "edit") {
+    const existing = loadStore().find((r) => r.id === state.id);
+    if (existing) {
+      showDetail(existing);
+      return;
+    }
+  }
+  showList();
+}
+
+function saveForm(state) {
+  const title = state.title.trim();
+  const stepsArray = state.steps
+    .split("\n")
+    .map((s) => s.trim())
+    .filter((s) => s !== "");
+  const ingredients = state.ingredients
+    .filter((row) => row.item.trim() !== "")
+    .map((row) => ({
+      amount: row.amount === "" ? null : Number(row.amount),
+      unit: row.unit === "none" ? null : row.unit,
+      item: { en: row.item.trim(), pt: "", it: "" },
+      staple: !!row.staple
+    }));
+
+  const fields = {
+    title: { en: title, pt: "", it: "" },
+    photo: state.photo.trim() === "" ? null : state.photo.trim(),
+    servings: state.servings === "" ? null : Number(state.servings),
+    type: state.type,
+    protein: state.protein === "none" ? null : state.protein,
+    format: state.format,
+    cuisine: state.cuisine,
+    season: state.season || "all year",
+    activeMinutes: state.activeMinutes === "" ? null : Number(state.activeMinutes),
+    totalMinutes: state.totalMinutes === "" ? null : Number(state.totalMinutes),
+    pots: state.pots === "" ? null : Number(state.pots),
+    pausable: !!state.pausable,
+    makeAhead: !!state.makeAhead,
+    ingredients: ingredients,
+    steps: { en: stepsArray, pt: [], it: [] }
+  };
+
+  const data = loadStore();
+  let saved;
+  if (state.mode === "edit") {
+    const idx = data.findIndex((r) => r.id === state.id);
+    const base = idx !== -1 ? data[idx] : {};
+    saved = { ...base, ...fields, id: state.id, number: state.number };
+    if (idx !== -1) data[idx] = saved;
+    else data.push(saved);
+  } else {
+    saved = {
+      id: slugify(title),
+      number: nextNumber(),
+      ...fields,
+      unexported: true
+    };
+    data.push(saved);
+  }
+
+  saveStore(data);
+  clearDraft();
+  renderList();
+  showDetail(saved);
+}
+
+const menuButton = document.getElementById("btn-menu");
+const menuPanel = document.getElementById("menu-panel");
+
+function openMenu() {
+  menuPanel.hidden = false;
+  menuButton.setAttribute("aria-expanded", "true");
+}
+
+function closeMenu() {
+  menuPanel.hidden = true;
+  menuButton.setAttribute("aria-expanded", "false");
+}
+
+menuButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  if (menuPanel.hidden) openMenu();
+  else closeMenu();
+});
+
+document.addEventListener("click", (event) => {
+  if (!menuPanel.hidden && !menuPanel.contains(event.target)) closeMenu();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeMenu();
+});
+
+document.getElementById("btn-add").addEventListener("click", () => openForm("add"));
+document.getElementById("btn-export").addEventListener("click", () => {
+  closeMenu();
+  exportRecipes();
+});
+document.getElementById("btn-reset").addEventListener("click", () => {
+  closeMenu();
+  resetRecipes();
+});
+
+renderList();
+showList();
