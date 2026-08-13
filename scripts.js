@@ -1262,8 +1262,12 @@ document.getElementById("btn-reset").addEventListener("click", () => {
 const bannerHeader = document.getElementById("banner-header");
 const compactHeader = document.getElementById("compact-header");
 function updateCompactHeader() {
-  const show = bannerHeader.getBoundingClientRect().bottom <= 0;
+  // Show once scrolled past the bottom of the resting banner. Using scrollY vs the
+  // banner's own height keeps the test stable when the compact-header padding is
+  // toggled (which would otherwise move the banner and feed back on itself).
+  const show = window.scrollY > bannerHeader.offsetHeight;
   compactHeader.classList.toggle("visible", show);
+  document.body.classList.toggle("compact-visible", show);
 }
 window.addEventListener("scroll", updateCompactHeader, { passive: true });
 updateCompactHeader();
