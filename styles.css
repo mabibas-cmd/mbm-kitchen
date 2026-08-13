@@ -270,6 +270,26 @@ button {
   margin: 1.25rem 0 0.5rem;
 }
 
+/* Faint notebook ruling behind the recipe detail view (above the paper texture,
+   below the text). Not applied to the list, roulette or form. */
+#recipe-detail {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    var(--hairline) 27px,
+    var(--hairline) 28px
+  );
+}
+
+#recipe-detail ul,
+#recipe-detail ol {
+  line-height: 28px;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .card-number {
   color: var(--red);
   letter-spacing: 0.15em;
