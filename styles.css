@@ -277,8 +277,8 @@ button {
     to bottom,
     transparent 0,
     transparent 27px,
-    var(--hairline) 27px,
-    var(--hairline) 28px
+    color-mix(in srgb, var(--hairline) 40%, transparent) 27px,
+    color-mix(in srgb, var(--hairline) 40%, transparent) 28px
   );
 }
 
