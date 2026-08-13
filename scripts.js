@@ -961,12 +961,20 @@ function saveForm(state) {
 const ROULETTE_PROTEINS = ["chicken", "seafood", "meat", "pork", "veg"];
 const ROULETTE_SAVOURY_FORMATS = ["pasta", "rice", "soup", "salad", "roast", "bread", "pie", "stir fry"];
 const ROULETTE_DESSERT_FORMATS = ["chocolate", "fruit", "custard", "pastry", "frozen"];
+// [totalMinutes limit, label] — matches recipes with totalMinutes under the limit.
+const ROULETTE_TIMES = [
+  [30, "Under 30"],
+  [60, "Under 60"],
+  [90, "Under 90"],
+  [120, "Under 2 hours"]
+];
 
 const rouletteState = {
   mode: "savoury",
   savouryProtein: "any",
   savouryFormat: "any",
   dessertFormat: "any",
+  time: "any",
   lastId: null
 };
 
@@ -999,8 +1007,28 @@ function filterRow(label, values, selected, onSelect) {
   return wrap;
 }
 
+function timeFilterRow() {
+  const wrap = document.createElement("div");
+  wrap.className = "filter-row";
+
+  const lab = document.createElement("div");
+  lab.className = "filter-label";
+  lab.textContent = "Time";
+  wrap.append(lab);
+
+  const options = [["any", "Any"]].concat(ROULETTE_TIMES);
+  wrap.append(
+    pillGroup(options, rouletteState.time, (v) => {
+      rouletteState.time = v;
+      buildRoulette();
+    })
+  );
+  return wrap;
+}
+
 function matchingRecipes() {
   return loadStore().filter((r) => {
+    if (rouletteState.time !== "any" && !(r.totalMinutes < rouletteState.time)) return false;
     if (rouletteState.mode === "dessert") {
       if (r.type !== "dessert") return false;
       if (rouletteState.dessertFormat !== "any" && r.format !== rouletteState.dessertFormat) return false;
@@ -1020,6 +1048,10 @@ function activeFiltersLabel() {
     if (rouletteState.savouryFormat !== "any") parts.push("format: " + rouletteState.savouryFormat);
   } else if (rouletteState.dessertFormat !== "any") {
     parts.push("format: " + rouletteState.dessertFormat);
+  }
+  if (rouletteState.time !== "any") {
+    const t = ROULETTE_TIMES.find((x) => x[0] === rouletteState.time);
+    parts.push("time: " + (t ? t[1].toLowerCase() : rouletteState.time));
   }
   return parts.join(", ");
 }
@@ -1141,6 +1173,8 @@ function buildRoulette() {
       })
     );
   }
+
+  nodes.push(timeFilterRow());
 
   const rollButton = document.createElement("button");
   rollButton.type = "button";
