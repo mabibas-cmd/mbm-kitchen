@@ -1,6 +1,7 @@
 const list = document.getElementById("recipe-list");
 const detail = document.getElementById("recipe-detail");
 const form = document.getElementById("recipe-form");
+const roulette = document.getElementById("recipe-roulette");
 const toolbar = document.getElementById("toolbar");
 
 const STORAGE_KEY = "mbm-recipes";
@@ -28,6 +29,7 @@ const proteinColours = {
   seafood: "var(--cobalt)",
   meat: "var(--red)",
   chicken: "var(--red)",
+  pork: "var(--red)",
   veg: "var(--ink)",
   dessert: "var(--red)"
 };
@@ -157,6 +159,8 @@ function showList() {
   detail.style.display = "none";
   form.innerHTML = "";
   form.style.display = "none";
+  roulette.innerHTML = "";
+  roulette.style.display = "none";
   list.style.display = "";
 }
 
@@ -216,9 +220,13 @@ function showDetail(recipe) {
   title.className = "card-title";
   title.textContent = pick(recipe.title, currentLang);
 
-  const serves = document.createElement("div");
-  serves.className = "card-serves";
-  serves.textContent = "serves " + recipe.servings;
+  // Servings are optional (e.g. desserts): omit the line entirely when blank.
+  let serves = null;
+  if (recipe.servings !== null && recipe.servings !== undefined && recipe.servings !== "") {
+    serves = document.createElement("div");
+    serves.className = "card-serves";
+    serves.textContent = "serves " + recipe.servings;
+  }
 
   // Cuisine / season labels: small, letterspaced, muted. Omit cuisine when blank
   // and season when blank or "all year".
@@ -250,8 +258,9 @@ function showDetail(recipe) {
   const ingredients = document.createElement("ul");
   recipe.ingredients.forEach((ing) => {
     const li = document.createElement("li");
-    const parts = [ing.amount];
-    if (ing.unit !== null) parts.push(ing.unit);
+    const parts = [];
+    if (ing.amount !== null && ing.amount !== undefined && ing.amount !== "") parts.push(ing.amount);
+    if (ing.unit !== null && ing.unit !== undefined) parts.push(ing.unit);
     parts.push(pick(ing.item, currentLang));
     li.textContent = parts.join(" ");
     ingredients.append(li);
@@ -290,7 +299,9 @@ function showDetail(recipe) {
 
   const nodes = [back, langToggle];
   if (photoEl) nodes.push(photoEl);
-  nodes.push(number, title, serves, metaRow(recipe));
+  nodes.push(number, title);
+  if (serves) nodes.push(serves);
+  nodes.push(metaRow(recipe));
   if (tagsEl) nodes.push(tagsEl);
   nodes.push(
     ingredientsHeading,
@@ -304,6 +315,8 @@ function showDetail(recipe) {
 
   form.innerHTML = "";
   form.style.display = "none";
+  roulette.innerHTML = "";
+  roulette.style.display = "none";
   list.style.display = "none";
   detail.style.display = "";
 }
@@ -314,41 +327,46 @@ function renderList() {
     const card = document.createElement("article");
     card.className = "card";
 
-    // Format icon (and a matching rule above it), coloured by protein — or red
-    // for desserts. Fall back to ink for any protein not in the mapping.
+    // Format icon colour: protein colour, or red for desserts, ink otherwise.
     const colour =
       recipe.type === "dessert"
         ? proteinColours.dessert
         : proteinColours[recipe.protein] || "var(--ink)";
 
-    const rule = document.createElement("div");
-    rule.style.height = "1px";
-    rule.style.width = "100%";
-    rule.style.backgroundColor = colour;
-    rule.style.marginBottom = "0.5rem";
-
-    const iconWrap = document.createElement("div");
-    iconWrap.style.textAlign = "center";
-    iconWrap.style.marginBottom = "0.5rem";
-    const icon = document.createElement("i");
-    icon.className = "ti " + formatIcons[recipe.format];
-    icon.style.fontSize = "24px";
-    icon.style.color = colour;
-    iconWrap.append(icon);
-
+    // Left: two-digit recipe number.
     const number = document.createElement("div");
-    number.className = "card-number";
-    number.textContent = formatNumber(recipe.number);
+    number.className = "list-number";
+    number.textContent = String(recipe.number).padStart(2, "0");
+
+    // Right: title (with the format icon inline before it) and a single meta line.
+    const body = document.createElement("div");
+    body.className = "list-body";
 
     const title = document.createElement("h2");
-    title.className = "card-title";
-    title.textContent = pick(recipe.title, currentLang);
+    title.className = "list-title";
+    const icon = document.createElement("i");
+    icon.className = "ti " + formatIcons[recipe.format];
+    icon.style.fontSize = "15px";
+    icon.style.color = colour;
+    icon.style.marginRight = "6px";
+    title.append(icon, document.createTextNode(pick(recipe.title, currentLang)));
 
-    const serves = document.createElement("div");
-    serves.className = "card-serves";
-    serves.textContent = "serves " + recipe.servings;
+    const parts = [];
+    if (recipe.type === "dessert") parts.push("dessert");
+    else if (recipe.cuisine) parts.push(recipe.cuisine);
+    parts.push(recipe.format);
+    if (recipe.servings !== null && recipe.servings !== undefined && recipe.servings !== "") {
+      parts.push("serves " + recipe.servings);
+    }
+    parts.push(recipe.activeMinutes + " active / " + recipe.totalMinutes + " total");
+    parts.push(recipe.pots + " pots");
 
-    card.append(rule, iconWrap, number, title, serves, metaRow(recipe));
+    const meta = document.createElement("div");
+    meta.className = "list-meta";
+    meta.textContent = parts.join(" · ");
+
+    body.append(title, meta);
+    card.append(number, body);
     card.addEventListener("click", () => showDetail(recipe));
     list.append(card);
   });
@@ -431,6 +449,7 @@ const CUISINE_OPTIONS = [
   "Middle Eastern",
   "Asian",
   "Mexican",
+  "American",
   "British",
   "Other"
 ];
@@ -627,7 +646,7 @@ function buildForm(state) {
   });
 
   const proteinSelect = styleField(
-    makeSelect(["chicken", "seafood", "meat", "veg", "none"], state.protein)
+    makeSelect(["chicken", "seafood", "meat", "pork", "veg", "none"], state.protein)
   );
   proteinSelect.addEventListener("change", () => {
     state.protein = proteinSelect.value;
@@ -848,6 +867,8 @@ function showForm() {
   list.style.display = "none";
   detail.innerHTML = "";
   detail.style.display = "none";
+  roulette.innerHTML = "";
+  roulette.style.display = "none";
   form.style.display = "";
 }
 
@@ -935,6 +956,220 @@ function saveForm(state) {
   showDetail(saved);
 }
 
+// ---- Roulette ----
+
+const ROULETTE_PROTEINS = ["chicken", "seafood", "meat", "pork", "veg"];
+const ROULETTE_SAVOURY_FORMATS = ["pasta", "rice", "soup", "salad", "roast", "bread", "pie", "stir fry"];
+const ROULETTE_DESSERT_FORMATS = ["chocolate", "fruit", "custard", "pastry", "frozen"];
+
+const rouletteState = {
+  mode: "savoury",
+  savouryProtein: "any",
+  savouryFormat: "any",
+  dessertFormat: "any",
+  lastId: null
+};
+
+function pillGroup(options, selected, onSelect) {
+  // options: array of [value, label]
+  const group = document.createElement("div");
+  group.className = "pill-group";
+  options.forEach(([value, label]) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pill" + (value === selected ? " selected" : "");
+    btn.textContent = label;
+    btn.addEventListener("click", () => onSelect(value));
+    group.append(btn);
+  });
+  return group;
+}
+
+function filterRow(label, values, selected, onSelect) {
+  const wrap = document.createElement("div");
+  wrap.className = "filter-row";
+
+  const lab = document.createElement("div");
+  lab.className = "filter-label";
+  lab.textContent = label;
+  wrap.append(lab);
+
+  const options = values.map((v) => [v, v]).concat([["any", "Any"]]);
+  wrap.append(pillGroup(options, selected, onSelect));
+  return wrap;
+}
+
+function matchingRecipes() {
+  return loadStore().filter((r) => {
+    if (rouletteState.mode === "dessert") {
+      if (r.type !== "dessert") return false;
+      if (rouletteState.dessertFormat !== "any" && r.format !== rouletteState.dessertFormat) return false;
+      return true;
+    }
+    if (r.type !== "savoury") return false;
+    if (rouletteState.savouryProtein !== "any" && r.protein !== rouletteState.savouryProtein) return false;
+    if (rouletteState.savouryFormat !== "any" && r.format !== rouletteState.savouryFormat) return false;
+    return true;
+  });
+}
+
+function activeFiltersLabel() {
+  const parts = [rouletteState.mode === "dessert" ? "Dessert" : "Savoury"];
+  if (rouletteState.mode === "savoury") {
+    if (rouletteState.savouryProtein !== "any") parts.push("protein: " + rouletteState.savouryProtein);
+    if (rouletteState.savouryFormat !== "any") parts.push("format: " + rouletteState.savouryFormat);
+  } else if (rouletteState.dessertFormat !== "any") {
+    parts.push("format: " + rouletteState.dessertFormat);
+  }
+  return parts.join(", ");
+}
+
+function rouletteResultCard(recipe) {
+  const card = document.createElement("article");
+  card.className = "card";
+
+  const colour =
+    recipe.type === "dessert"
+      ? proteinColours.dessert
+      : proteinColours[recipe.protein] || "var(--ink)";
+
+  const iconWrap = document.createElement("div");
+  iconWrap.style.textAlign = "center";
+  iconWrap.style.marginBottom = "0.5rem";
+  const icon = document.createElement("i");
+  icon.className = "ti " + formatIcons[recipe.format];
+  icon.style.fontSize = "24px";
+  icon.style.color = colour;
+  iconWrap.append(icon);
+
+  const number = document.createElement("div");
+  number.className = "card-number";
+  number.textContent = formatNumber(recipe.number);
+
+  const title = document.createElement("h2");
+  title.className = "card-title";
+  title.textContent = pick(recipe.title, currentLang);
+
+  const nodes = [iconWrap, number, title];
+  if (recipe.servings !== null && recipe.servings !== undefined && recipe.servings !== "") {
+    const serves = document.createElement("div");
+    serves.className = "card-serves";
+    serves.textContent = "serves " + recipe.servings;
+    nodes.push(serves);
+  }
+  nodes.push(metaRow(recipe));
+
+  card.append(...nodes);
+  card.addEventListener("click", () => showDetail(recipe));
+  return card;
+}
+
+function roll() {
+  const resultArea = document.getElementById("roulette-result");
+  resultArea.innerHTML = "";
+
+  const matches = matchingRecipes();
+  if (matches.length === 0) {
+    const msg = document.createElement("div");
+    msg.className = "roulette-empty";
+    msg.textContent = "No recipes match " + activeFiltersLabel() + ".";
+    resultArea.append(msg);
+    return;
+  }
+
+  // Avoid repeating the same recipe twice in a row when more than one matches.
+  let pool = matches;
+  if (matches.length > 1 && rouletteState.lastId !== null) {
+    const filtered = matches.filter((r) => r.id !== rouletteState.lastId);
+    if (filtered.length) pool = filtered;
+  }
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  rouletteState.lastId = chosen.id;
+
+  const again = document.createElement("button");
+  again.type = "button";
+  again.className = "roll-again-button";
+  again.textContent = "Roll again";
+  again.addEventListener("click", roll);
+
+  resultArea.append(rouletteResultCard(chosen), again);
+}
+
+function buildRoulette() {
+  roulette.innerHTML = "";
+
+  const back = document.createElement("a");
+  back.className = "back-link";
+  back.href = "#";
+  back.textContent = "← All recipes";
+  back.addEventListener("click", (event) => {
+    event.preventDefault();
+    showList();
+  });
+
+  const modeToggle = pillGroup(
+    [["savoury", "Savoury"], ["dessert", "Dessert"]],
+    rouletteState.mode,
+    (value) => {
+      rouletteState.mode = value;
+      rouletteState.lastId = null;
+      buildRoulette();
+    }
+  );
+  const modeRow = document.createElement("div");
+  modeRow.className = "filter-row";
+  modeRow.append(modeToggle);
+
+  const nodes = [back, modeRow];
+
+  if (rouletteState.mode === "savoury") {
+    nodes.push(
+      filterRow("Protein", ROULETTE_PROTEINS, rouletteState.savouryProtein, (v) => {
+        rouletteState.savouryProtein = v;
+        buildRoulette();
+      }),
+      filterRow("Format", ROULETTE_SAVOURY_FORMATS, rouletteState.savouryFormat, (v) => {
+        rouletteState.savouryFormat = v;
+        buildRoulette();
+      })
+    );
+  } else {
+    nodes.push(
+      filterRow("Format", ROULETTE_DESSERT_FORMATS, rouletteState.dessertFormat, (v) => {
+        rouletteState.dessertFormat = v;
+        buildRoulette();
+      })
+    );
+  }
+
+  const rollButton = document.createElement("button");
+  rollButton.type = "button";
+  rollButton.className = "roll-button";
+  rollButton.textContent = "Roll";
+  rollButton.addEventListener("click", roll);
+
+  const resultArea = document.createElement("div");
+  resultArea.id = "roulette-result";
+
+  nodes.push(rollButton, resultArea);
+  roulette.append(...nodes);
+}
+
+function showRoulette() {
+  list.style.display = "none";
+  detail.innerHTML = "";
+  detail.style.display = "none";
+  form.innerHTML = "";
+  form.style.display = "none";
+  roulette.style.display = "";
+}
+
+function openRoulette() {
+  rouletteState.lastId = null;
+  buildRoulette();
+  showRoulette();
+}
+
 const menuButton = document.getElementById("btn-menu");
 const menuPanel = document.getElementById("menu-panel");
 
@@ -963,6 +1198,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.getElementById("btn-add").addEventListener("click", () => openForm("add"));
+document.getElementById("btn-roulette").addEventListener("click", openRoulette);
 document.getElementById("btn-export").addEventListener("click", () => {
   closeMenu();
   exportRecipes();
@@ -971,6 +1207,16 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   closeMenu();
   resetRecipes();
 });
+
+// Compact header fades in once the resting banner has scrolled out of view.
+const bannerHeader = document.getElementById("banner-header");
+const compactHeader = document.getElementById("compact-header");
+function updateCompactHeader() {
+  const show = bannerHeader.getBoundingClientRect().bottom <= 0;
+  compactHeader.classList.toggle("visible", show);
+}
+window.addEventListener("scroll", updateCompactHeader, { passive: true });
+updateCompactHeader();
 
 renderList();
 showList();
