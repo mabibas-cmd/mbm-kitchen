@@ -293,6 +293,8 @@ button {
 /* Give the ACTIVE / TOTAL / POTS block its own cream background so the notebook
    ruling does not run through it. The three columns are left unchanged. */
 #recipe-detail .card-meta {
+  display: inline-flex;
+  gap: 24px;
   background-color: var(--cream);
   padding: 12px;
   border-radius: 2px;
