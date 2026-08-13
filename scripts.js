@@ -297,6 +297,17 @@ function showDetail(recipe) {
     showList();
   });
 
+  const signature = document.createElement("div");
+  signature.className = "detail-signature";
+  const signatureText = document.createElement("span");
+  signatureText.className = "detail-signature-text";
+  signatureText.textContent = "from the MBM kitchen";
+  const signatureMark = document.createElement("img");
+  signatureMark.className = "detail-signature-mark";
+  signatureMark.src = "photos/mbm-mark.png";
+  signatureMark.alt = "";
+  signature.append(signatureText, signatureMark);
+
   const nodes = [back, langToggle];
   if (photoEl) nodes.push(photoEl);
   nodes.push(number, title);
@@ -309,7 +320,8 @@ function showDetail(recipe) {
     stepsHeading,
     steps,
     editButton,
-    deleteButton
+    deleteButton,
+    signature
   );
   detail.append(...nodes);
 
@@ -1102,10 +1114,14 @@ function roll() {
 
   const matches = matchingRecipes();
   if (matches.length === 0) {
+    const mark = document.createElement("img");
+    mark.className = "roulette-empty-mark";
+    mark.src = "photos/mbm-mark.png";
+    mark.alt = "";
     const msg = document.createElement("div");
     msg.className = "roulette-empty";
     msg.textContent = "No recipes match " + activeFiltersLabel() + ".";
-    resultArea.append(msg);
+    resultArea.append(mark, msg);
     return;
   }
 

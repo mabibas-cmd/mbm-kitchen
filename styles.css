@@ -368,6 +368,36 @@ button {
   margin-top: 1rem;
 }
 
+.roulette-empty-mark {
+  display: block;
+  width: 120px;
+  height: auto;
+  margin: 0 auto 12px;
+}
+
+/* Character-mark signature at the bottom of the recipe detail view. */
+.detail-signature {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.detail-signature-text {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-signature-mark {
+  width: 100px;
+  height: auto;
+  display: block;
+}
+
 @media (min-width: 600px) {
   body {
     max-width: 640px;
