@@ -128,10 +128,9 @@ a {
 
 #btn-roulette {
   display: block;
-  max-width: 220px;
+  width: 170px;
   height: auto;
   margin: 0 auto;
-  min-height: 44px;
   cursor: pointer;
 }
 
