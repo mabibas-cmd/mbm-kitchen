@@ -1248,7 +1248,10 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeMenu();
 });
 
-document.getElementById("btn-add").addEventListener("click", () => openForm("add"));
+document.getElementById("btn-add").addEventListener("click", () => {
+  closeMenu();
+  openForm("add");
+});
 document.getElementById("btn-roulette").addEventListener("click", openRoulette);
 document.getElementById("btn-export").addEventListener("click", () => {
   closeMenu();

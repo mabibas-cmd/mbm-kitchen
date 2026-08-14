@@ -126,7 +126,6 @@ a {
   border-bottom: 1.5px solid var(--ink);
 }
 
-#btn-add,
 #btn-roulette {
   background: none;
   border: 0;
@@ -140,13 +139,6 @@ a {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
-}
-
-#btn-add {
-  color: var(--red);
-}
-
-#btn-roulette {
   color: var(--cobalt);
 }
 
