@@ -3,6 +3,7 @@ const detail = document.getElementById("recipe-detail");
 const form = document.getElementById("recipe-form");
 const roulette = document.getElementById("recipe-roulette");
 const toolbar = document.getElementById("toolbar");
+const listTabs = document.getElementById("list-tabs");
 
 const STORAGE_KEY = "mbm-recipes";
 
@@ -162,6 +163,7 @@ function showList() {
   roulette.innerHTML = "";
   roulette.style.display = "none";
   list.style.display = "";
+  listTabs.style.display = "";
 }
 
 function showDetail(recipe) {
@@ -331,12 +333,36 @@ function showDetail(recipe) {
   roulette.innerHTML = "";
   roulette.style.display = "none";
   list.style.display = "none";
+  listTabs.style.display = "none";
   detail.style.display = "";
+}
+
+let listFilter = "savoury";
+
+function renderTabs() {
+  listTabs.innerHTML = "";
+  [
+    ["savoury", "Meals"],
+    ["dessert", "Desserts"]
+  ].forEach(([type, label]) => {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.className = "list-tab" + (listFilter === type ? " active" : "");
+    tab.textContent = label;
+    tab.addEventListener("click", () => {
+      listFilter = type;
+      renderTabs();
+      renderList();
+    });
+    listTabs.append(tab);
+  });
 }
 
 function renderList() {
   list.innerHTML = "";
-  loadStore().forEach((recipe) => {
+  loadStore()
+    .filter((recipe) => recipe.type === listFilter)
+    .forEach((recipe) => {
     const card = document.createElement("article");
     card.className = "card";
 
@@ -878,6 +904,7 @@ function buildForm(state) {
 
 function showForm() {
   list.style.display = "none";
+  listTabs.style.display = "none";
   detail.innerHTML = "";
   detail.style.display = "none";
   roulette.innerHTML = "";
@@ -1271,6 +1298,7 @@ function buildRoulette() {
 
 function showRoulette() {
   list.style.display = "none";
+  listTabs.style.display = "none";
   detail.innerHTML = "";
   detail.style.display = "none";
   form.innerHTML = "";
@@ -1348,5 +1376,6 @@ function goToRecipeList() {
 document.getElementById("banner-large").addEventListener("click", goToRecipeList);
 document.getElementById("banner-compact").addEventListener("click", goToRecipeList);
 
+renderTabs();
 renderList();
 showList();
