@@ -471,7 +471,22 @@ function showPostcard(recipe) {
   const card = buildPostcard(recipe);
   scaler.append(card);
 
-  postcard.append(back, scaler);
+  const actions = document.createElement("div");
+  actions.className = "postcard-actions";
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.className = "postcard-action";
+  saveButton.textContent = "Save image";
+  const shareButton = document.createElement("button");
+  shareButton.type = "button";
+  shareButton.className = "postcard-action";
+  shareButton.textContent = "Share";
+  actions.append(saveButton, shareButton);
+
+  saveButton.addEventListener("click", () => savePostcard(card, recipe, saveButton, "Save image"));
+  shareButton.addEventListener("click", () => sharePostcard(card, recipe, shareButton, "Share"));
+
+  postcard.append(back, scaler, actions);
 
   list.style.display = "none";
   listTabs.style.display = "none";
@@ -488,6 +503,77 @@ function showPostcard(recipe) {
   card.querySelectorAll("img").forEach((img) => {
     if (!img.complete) img.addEventListener("load", scalePostcard);
   });
+}
+
+// Wait until every image inside the element has finished loading (or errored),
+// so the render captures the full postcard.
+function waitForImages(el) {
+  const images = Array.from(el.querySelectorAll("img"));
+  return Promise.all(images.map((img) => {
+    if (img.complete) return Promise.resolve();
+    return new Promise((resolve) => {
+      img.addEventListener("load", resolve, { once: true });
+      img.addEventListener("error", resolve, { once: true });
+    });
+  }));
+}
+
+// Render the postcard to a PNG blob at its true 1080px width. The preview is
+// scaled down with a CSS transform, so we override that transform and pass the
+// natural 1080px dimensions to html-to-image.
+async function renderPostcardBlob(card) {
+  await waitForImages(card);
+  const cream = getComputedStyle(document.documentElement).getPropertyValue("--cream").trim();
+  return htmlToImage.toBlob(card, {
+    width: 1080,
+    height: card.offsetHeight,
+    pixelRatio: 2,
+    backgroundColor: cream,
+    style: { transform: "none", transformOrigin: "top left" }
+  });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function savePostcard(card, recipe, button, label) {
+  button.disabled = true;
+  button.textContent = "Preparing…";
+  try {
+    const blob = await renderPostcardBlob(card);
+    downloadBlob(blob, recipe.id + ".png");
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+}
+
+async function sharePostcard(card, recipe, button, label) {
+  button.disabled = true;
+  button.textContent = "Preparing…";
+  try {
+    const blob = await renderPostcardBlob(card);
+    const filename = recipe.id + ".png";
+    const file = new File([blob], filename, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: pick(recipe.title, currentLang) });
+    } else {
+      downloadBlob(blob, filename);
+    }
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
 }
 
 let listFilter = "all";

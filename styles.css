@@ -301,6 +301,16 @@ button {
   overflow: hidden;
 }
 
+.postcard-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.postcard-action {
+  min-height: 44px;
+}
+
 .postcard {
   width: 1080px;
   box-sizing: border-box;
