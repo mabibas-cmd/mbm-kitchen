@@ -7,7 +7,7 @@
   --hairline: #DCCFB8;
   --font-display: 'Fraunces', Georgia, serif;
   --font-ui: 'Archivo', system-ui, sans-serif;
-  --compact-h: 64px;
+  --compact-h: 88px;
 }
 
 body {
@@ -70,7 +70,7 @@ h1 {
   height: var(--compact-h);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 1rem;
   background-color: var(--cream);
   border-bottom: 1px solid var(--hairline);
@@ -85,8 +85,11 @@ h1 {
 }
 
 #banner-compact {
-  display: block;
-  width: 150px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
   height: auto;
 }
 
