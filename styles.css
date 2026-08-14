@@ -246,6 +246,47 @@ button {
   border-bottom-color: var(--red);
 }
 
+.list-search-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.list-search-toggle .ti {
+  font-size: 18px;
+}
+
+#list-search {
+  margin-bottom: 12px;
+}
+
+#list-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 12px;
+  background-color: var(--cream);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  color: var(--ink);
+}
+
+.list-empty {
+  font-family: var(--font-ui);
+  color: var(--muted);
+  margin-top: 12px;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;

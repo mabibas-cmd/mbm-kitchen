@@ -4,6 +4,8 @@ const form = document.getElementById("recipe-form");
 const roulette = document.getElementById("recipe-roulette");
 const toolbar = document.getElementById("toolbar");
 const listTabs = document.getElementById("list-tabs");
+const listSearch = document.getElementById("list-search");
+const listSearchInput = document.getElementById("list-search-input");
 
 const STORAGE_KEY = "mbm-recipes";
 
@@ -164,6 +166,7 @@ function showList() {
   roulette.style.display = "none";
   list.style.display = "";
   listTabs.style.display = "";
+  listSearch.hidden = !searchOpen;
 }
 
 function showDetail(recipe) {
@@ -334,10 +337,43 @@ function showDetail(recipe) {
   roulette.style.display = "none";
   list.style.display = "none";
   listTabs.style.display = "none";
+  listSearch.hidden = true;
   detail.style.display = "";
 }
 
 let listFilter = "savoury";
+let searchQuery = "";
+let searchOpen = false;
+
+// Returns every translated string for a language-aware field, tolerating the
+// legacy plain-string shape.
+function allLangStrings(field) {
+  if (field == null) return [];
+  if (typeof field === "string") return [field];
+  return ["en", "pt", "it"].map((lang) => field[lang]).filter(Boolean);
+}
+
+function matchesSearch(recipe, query) {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  if (allLangStrings(recipe.title).some((s) => s.toLowerCase().includes(q))) return true;
+  return recipe.ingredients.some((ing) =>
+    allLangStrings(ing.item).some((s) => s.toLowerCase().includes(q))
+  );
+}
+
+function toggleSearch() {
+  searchOpen = !searchOpen;
+  if (searchOpen) {
+    listSearch.hidden = false;
+    listSearchInput.focus();
+  } else {
+    listSearch.hidden = true;
+    listSearchInput.value = "";
+    searchQuery = "";
+    renderList();
+  }
+}
 
 function renderTabs() {
   listTabs.innerHTML = "";
@@ -356,13 +392,24 @@ function renderTabs() {
     });
     listTabs.append(tab);
   });
+
+  const searchBtn = document.createElement("button");
+  searchBtn.type = "button";
+  searchBtn.className = "list-search-toggle";
+  searchBtn.setAttribute("aria-label", "Search");
+  const searchIcon = document.createElement("i");
+  searchIcon.className = "ti ti-search";
+  searchBtn.append(searchIcon);
+  searchBtn.addEventListener("click", toggleSearch);
+  listTabs.append(searchBtn);
 }
 
 function renderList() {
   list.innerHTML = "";
-  loadStore()
+  const shown = loadStore()
     .filter((recipe) => recipe.type === listFilter)
-    .forEach((recipe) => {
+    .filter((recipe) => matchesSearch(recipe, searchQuery));
+  shown.forEach((recipe) => {
     const card = document.createElement("article");
     card.className = "card";
 
@@ -409,6 +456,12 @@ function renderList() {
     card.addEventListener("click", () => showDetail(recipe));
     list.append(card);
   });
+  if (shown.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "list-empty";
+    empty.textContent = "No matching recipes.";
+    list.append(empty);
+  }
   renderNotice();
 }
 
@@ -905,6 +958,7 @@ function buildForm(state) {
 function showForm() {
   list.style.display = "none";
   listTabs.style.display = "none";
+  listSearch.hidden = true;
   detail.innerHTML = "";
   detail.style.display = "none";
   roulette.innerHTML = "";
@@ -1299,6 +1353,7 @@ function buildRoulette() {
 function showRoulette() {
   list.style.display = "none";
   listTabs.style.display = "none";
+  listSearch.hidden = true;
   detail.innerHTML = "";
   detail.style.display = "none";
   form.innerHTML = "";
@@ -1375,6 +1430,11 @@ function goToRecipeList() {
 }
 document.getElementById("banner-large").addEventListener("click", goToRecipeList);
 document.getElementById("banner-compact").addEventListener("click", goToRecipeList);
+
+listSearchInput.addEventListener("input", () => {
+  searchQuery = listSearchInput.value;
+  renderList();
+});
 
 renderTabs();
 renderList();
