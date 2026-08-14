@@ -130,7 +130,7 @@ a {
   display: block;
   width: 170px;
   height: auto;
-  margin: 0 auto;
+  margin: 20px auto 24px;
   cursor: pointer;
 }
 
