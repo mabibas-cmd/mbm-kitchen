@@ -308,7 +308,7 @@ function showDetail(recipe) {
   signatureMark.alt = "";
   signature.append(signatureText, signatureMark);
 
-  const nodes = [back, langToggle];
+  const nodes = [back];
   if (photoEl) nodes.push(photoEl);
   nodes.push(number, title);
   if (serves) nodes.push(serves);
@@ -321,6 +321,7 @@ function showDetail(recipe) {
     steps,
     editButton,
     deleteButton,
+    langToggle,
     signature
   );
   detail.append(...nodes);
