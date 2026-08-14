@@ -102,10 +102,6 @@ h1 {
 
 /* Language toggle now sits at the bottom of the recipe detail view, above the
    signature; give it space from the content above. */
-.lang-toggle {
-  margin-top: 24px;
-}
-
 h1, h2, h3 {
   font-family: var(--font-display);
   font-variation-settings: 'SOFT' 80, 'WONK' 1, 'opsz' 120;
@@ -675,7 +671,7 @@ button {
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 1.25rem;
 }
 
 .detail-signature {
