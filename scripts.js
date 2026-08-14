@@ -1272,5 +1272,14 @@ function updateCompactHeader() {
 window.addEventListener("scroll", updateCompactHeader, { passive: true });
 updateCompactHeader();
 
+// Clicking either header wordmark returns to the recipe list and scrolls to the
+// top. The hamburger button is a separate element and is unaffected.
+function goToRecipeList() {
+  showList();
+  window.scrollTo(0, 0);
+}
+document.getElementById("banner-large").addEventListener("click", goToRecipeList);
+document.getElementById("banner-compact").addEventListener("click", goToRecipeList);
+
 renderList();
 showList();

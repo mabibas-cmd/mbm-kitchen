@@ -93,6 +93,13 @@ h1 {
   height: auto;
 }
 
+/* Both header wordmarks act as a link back to the recipe list. */
+#banner-large,
+#banner-compact {
+  cursor: pointer;
+  min-height: 44px;
+}
+
 h1, h2, h3 {
   font-family: var(--font-display);
   font-variation-settings: 'SOFT' 80, 'WONK' 1, 'opsz' 120;
