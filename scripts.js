@@ -2,6 +2,7 @@ const list = document.getElementById("recipe-list");
 const detail = document.getElementById("recipe-detail");
 const form = document.getElementById("recipe-form");
 const roulette = document.getElementById("recipe-roulette");
+const postcard = document.getElementById("recipe-postcard");
 const toolbar = document.getElementById("toolbar");
 const listTabs = document.getElementById("list-tabs");
 const listSearch = document.getElementById("list-search");
@@ -164,6 +165,8 @@ function showList() {
   form.style.display = "none";
   roulette.innerHTML = "";
   roulette.style.display = "none";
+  postcard.innerHTML = "";
+  postcard.style.display = "none";
   list.style.display = "";
   listTabs.style.display = "";
   listSearch.hidden = !searchOpen;
@@ -313,6 +316,15 @@ function showDetail(recipe) {
   signatureMark.alt = "";
   signature.append(signatureText, signatureMark);
 
+  const shareLink = document.createElement("a");
+  shareLink.className = "share-link";
+  shareLink.href = "#";
+  shareLink.textContent = "Share recipe";
+  shareLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    showPostcard(recipe);
+  });
+
   const nodes = [back];
   if (photoEl) nodes.push(photoEl);
   nodes.push(number, title);
@@ -326,6 +338,7 @@ function showDetail(recipe) {
     steps,
     editButton,
     deleteButton,
+    shareLink,
     langToggle,
     signature
   );
@@ -335,10 +348,146 @@ function showDetail(recipe) {
   form.style.display = "none";
   roulette.innerHTML = "";
   roulette.style.display = "none";
+  postcard.innerHTML = "";
+  postcard.style.display = "none";
   list.style.display = "none";
   listTabs.style.display = "none";
   listSearch.hidden = true;
   detail.style.display = "";
+}
+
+function buildPostcard(recipe) {
+  const card = document.createElement("div");
+  card.className = "postcard";
+
+  const wordmark = document.createElement("img");
+  wordmark.className = "postcard-wordmark";
+  wordmark.src = "photos/wordmark-banner.png";
+  wordmark.alt = "";
+  card.append(wordmark);
+
+  if (recipe.photo) {
+    const photoWrap = document.createElement("div");
+    photoWrap.className = "postcard-photo";
+    const photoImg = document.createElement("img");
+    photoImg.className = "postcard-photo-img";
+    photoImg.src = "photos/" + recipe.photo;
+    photoImg.alt = "";
+    const frame = document.createElement("img");
+    frame.className = "postcard-photo-frame";
+    frame.src = "photos/" + frameFor(recipe);
+    frame.alt = "";
+    photoWrap.append(photoImg, frame);
+    card.append(photoWrap);
+  }
+
+  const number = document.createElement("div");
+  number.className = "postcard-number";
+  number.textContent = formatNumber(recipe.number);
+  card.append(number);
+
+  const title = document.createElement("h2");
+  title.className = "postcard-title";
+  title.textContent = pick(recipe.title, currentLang);
+  card.append(title);
+
+  if (recipe.servings !== null && recipe.servings !== undefined && recipe.servings !== "") {
+    const serves = document.createElement("div");
+    serves.className = "postcard-serves";
+    serves.textContent = "serves " + recipe.servings;
+    card.append(serves);
+  }
+
+  card.append(metaRow(recipe));
+
+  const ingredientsHeading = document.createElement("h3");
+  ingredientsHeading.className = "postcard-heading";
+  ingredientsHeading.textContent = "Ingredients";
+  const ingredients = document.createElement("ul");
+  ingredients.className = "postcard-list";
+  recipe.ingredients.forEach((ing) => {
+    const li = document.createElement("li");
+    const parts = [];
+    if (ing.amount !== null && ing.amount !== undefined && ing.amount !== "") parts.push(ing.amount);
+    if (ing.unit !== null && ing.unit !== undefined) parts.push(ing.unit);
+    parts.push(pick(ing.item, currentLang));
+    li.textContent = parts.join(" ");
+    ingredients.append(li);
+  });
+  card.append(ingredientsHeading, ingredients);
+
+  const stepsHeading = document.createElement("h3");
+  stepsHeading.className = "postcard-heading";
+  stepsHeading.textContent = "Steps";
+  const steps = document.createElement("ol");
+  steps.className = "postcard-list";
+  pick(recipe.steps, currentLang).forEach((step) => {
+    const li = document.createElement("li");
+    li.textContent = step;
+    steps.append(li);
+  });
+  card.append(stepsHeading, steps);
+
+  const footer = document.createElement("div");
+  footer.className = "postcard-footer";
+  const footerText = document.createElement("span");
+  footerText.className = "postcard-footer-text";
+  footerText.textContent = "FROM THE MBM KITCHEN";
+  const footerMark = document.createElement("img");
+  footerMark.className = "postcard-mark";
+  footerMark.src = "photos/mbm-mark.png";
+  footerMark.alt = "";
+  footer.append(footerText, footerMark);
+  card.append(footer);
+
+  return card;
+}
+
+// The postcard is a fixed 1080px design scaled down to fit the preview width.
+function scalePostcard() {
+  const scaler = postcard.querySelector(".postcard-scaler");
+  const card = postcard.querySelector(".postcard");
+  if (!scaler || !card) return;
+  const scale = scaler.clientWidth / 1080;
+  card.style.transformOrigin = "top left";
+  card.style.transform = "scale(" + scale + ")";
+  scaler.style.height = card.offsetHeight * scale + "px";
+}
+
+function showPostcard(recipe) {
+  postcard.innerHTML = "";
+
+  const back = document.createElement("a");
+  back.className = "back-link";
+  back.href = "#";
+  back.textContent = "Back";
+  back.addEventListener("click", (event) => {
+    event.preventDefault();
+    showDetail(recipe);
+  });
+
+  const scaler = document.createElement("div");
+  scaler.className = "postcard-scaler";
+  const card = buildPostcard(recipe);
+  scaler.append(card);
+
+  postcard.append(back, scaler);
+
+  list.style.display = "none";
+  listTabs.style.display = "none";
+  listSearch.hidden = true;
+  detail.innerHTML = "";
+  detail.style.display = "none";
+  form.innerHTML = "";
+  form.style.display = "none";
+  roulette.innerHTML = "";
+  roulette.style.display = "none";
+  postcard.style.display = "";
+
+  scalePostcard();
+  card.querySelectorAll("img").forEach((img) => {
+    if (!img.complete) img.addEventListener("load", scalePostcard);
+  });
 }
 
 let listFilter = "all";
@@ -964,6 +1113,8 @@ function showForm() {
   detail.style.display = "none";
   roulette.innerHTML = "";
   roulette.style.display = "none";
+  postcard.innerHTML = "";
+  postcard.style.display = "none";
   form.style.display = "";
 }
 
@@ -1359,6 +1510,8 @@ function showRoulette() {
   detail.style.display = "none";
   form.innerHTML = "";
   form.style.display = "none";
+  postcard.innerHTML = "";
+  postcard.style.display = "none";
   roulette.style.display = "";
 }
 
@@ -1436,6 +1589,8 @@ listSearchInput.addEventListener("input", () => {
   searchQuery = listSearchInput.value;
   renderList();
 });
+
+window.addEventListener("resize", scalePostcard);
 
 renderTabs();
 renderList();
