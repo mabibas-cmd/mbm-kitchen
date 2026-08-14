@@ -316,12 +316,11 @@ function showDetail(recipe) {
   signatureMark.alt = "";
   signature.append(signatureText, signatureMark);
 
-  const shareLink = document.createElement("a");
+  const shareLink = document.createElement("img");
   shareLink.className = "share-link";
-  shareLink.href = "#";
-  shareLink.textContent = "Share recipe";
-  shareLink.addEventListener("click", (event) => {
-    event.preventDefault();
+  shareLink.src = "photos/share-envelope.png";
+  shareLink.alt = "Share recipe";
+  shareLink.addEventListener("click", () => {
     showPostcard(recipe);
   });
 

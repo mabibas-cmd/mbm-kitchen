@@ -288,9 +288,9 @@ button {
 }
 
 .share-link {
-  display: flex;
-  width: fit-content;
-  align-items: center;
+  display: block;
+  width: 80px;
+  height: auto;
   min-height: 44px;
   margin-top: 1.25rem;
   cursor: pointer;
