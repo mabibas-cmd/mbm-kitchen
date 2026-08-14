@@ -621,5 +621,172 @@ const recipes = [
       pt: [],
       it: []
     }
+  },
+  {
+    id: "crispy-rice-prawn-salad",
+    number: 17,
+    title: { en: "Crispy Rice Prawn Salad", pt: "", it: "" },
+    servings: 4,
+    photo: null,
+    type: "savoury",
+    protein: "seafood",
+    format: "salad",
+    activeMinutes: 30,
+    totalMinutes: 100,
+    pots: 2,
+    pausable: true,
+    makeAhead: true,
+    cuisine: "Asian",
+    season: "summer",
+    ingredients: [
+      { amount: 1, unit: "cup", item: { en: "rice", pt: "", it: "" }, staple: false },
+      { amount: 300, unit: "g", item: { en: "prawns", pt: "", it: "" }, staple: false },
+      { amount: 1, unit: "can", item: { en: "corn", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "edamame", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "cucumber", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "avocado", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "carrots", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "cabbage", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "green goddess sauce or sesame sauce", pt: "", it: "" }, staple: false }
+    ],
+    steps: {
+      en: [
+        "Oven dry cooked rice in low tempo with some sesame oil and soy sauce until crispy",
+        "Fry prawns",
+        "Chop veggies and add all together",
+        "Mix well"
+      ],
+      pt: [],
+      it: []
+    }
+  },
+  {
+    id: "bacon-pear-and-pecan-salad",
+    number: 18,
+    title: { en: "Bacon, Pear and Pecan salad", pt: "", it: "" },
+    servings: 4,
+    photo: null,
+    type: "savoury",
+    protein: "pork",
+    format: "salad",
+    activeMinutes: 10,
+    totalMinutes: 30,
+    pots: 1,
+    pausable: true,
+    makeAhead: true,
+    cuisine: "Brazilian",
+    season: "all year",
+    ingredients: [
+      { amount: 1, unit: "bag", item: { en: "spinach and rocket", pt: "", it: "" }, staple: false },
+      { amount: 2, unit: null, item: { en: "pears", pt: "", it: "" }, staple: false },
+      { amount: 300, unit: "g", item: { en: "bacon", pt: "", it: "" }, staple: false },
+      { amount: 100, unit: "g", item: { en: "pecans", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "maple syrup", pt: "", it: "" }, staple: false }
+    ],
+    steps: {
+      en: [
+        "Dice pears and bacon",
+        "Add them with the pecan to a pan, toss with a little maple syrup and salt",
+        "Bake at 180 until bacon and pear cooked through",
+        "Let it cool",
+        "Mix with leaves, finish with olive oil and salt"
+      ],
+      pt: [],
+      it: []
+    }
+  },
+  {
+    id: "beetroot-salad",
+    number: 19,
+    title: { en: "Beetroot salad", pt: "", it: "" },
+    servings: 2,
+    photo: null,
+    type: "savoury",
+    protein: "veg",
+    format: "salad",
+    activeMinutes: 10,
+    totalMinutes: 10,
+    pots: 1,
+    pausable: true,
+    makeAhead: true,
+    cuisine: "Greek",
+    season: "all year",
+    ingredients: [
+      { amount: 250, unit: "g", item: { en: "beetroot", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "spinach", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "marinated goats cheese", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "pepitas", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "olive oil", pt: "", it: "" }, staple: false }
+    ],
+    steps: {
+      en: [
+        "Dice all and mix"
+      ],
+      pt: [],
+      it: []
+    }
+  },
+  {
+    id: "pasta-al-sugo",
+    number: 20,
+    title: { en: "Pasta al Sugo", pt: "", it: "" },
+    servings: 2,
+    photo: null,
+    type: "savoury",
+    protein: "veg",
+    format: "pasta",
+    activeMinutes: 10,
+    totalMinutes: 20,
+    pots: 2,
+    pausable: true,
+    makeAhead: true,
+    cuisine: "Italian",
+    season: "all year",
+    ingredients: [
+      { amount: null, unit: null, item: { en: "pasta", pt: "", it: "" }, staple: false },
+      { amount: 1, unit: "jar", item: { en: "passata", pt: "", it: "" }, staple: false },
+      { amount: null, unit: null, item: { en: "burrata (optional)", pt: "", it: "" }, staple: false }
+    ],
+    steps: {
+      en: [
+        "Make sauce seasoning with salt, pepper, chilli flakes, beef stock cube.",
+        "Let it simmer while pasta cooks",
+        "Finish with parmesan, burrata optional"
+      ],
+      pt: [],
+      it: []
+    }
+  },
+  {
+    id: "amatriciana",
+    number: 21,
+    title: { en: "Amatriciana", pt: "", it: "" },
+    servings: 2,
+    photo: null,
+    type: "savoury",
+    protein: "meat",
+    format: "pasta",
+    activeMinutes: 10,
+    totalMinutes: 20,
+    pots: 2,
+    pausable: true,
+    makeAhead: true,
+    cuisine: "Italian",
+    season: "all year",
+    ingredients: [
+      { amount: null, unit: null, item: { en: "pasta", pt: "", it: "" }, staple: false },
+      { amount: 200, unit: "g", item: { en: "pancetta", pt: "", it: "" }, staple: false },
+      { amount: 1, unit: "jar", item: { en: "passata", pt: "", it: "" }, staple: false }
+    ],
+    steps: {
+      en: [
+        "Fry pancetta until crispy",
+        "Add passata, season with salt and pepper, chilli flakes",
+        "Add cooked pasta",
+        "Finish with parmesan"
+      ],
+      pt: [],
+      it: []
+    }
   }
 ];
