@@ -396,6 +396,71 @@ button {
   margin: 0 auto 12px;
 }
 
+/* Illustrated-jar filters on the What's for dinner view. */
+.jar {
+  margin-bottom: 16px;
+}
+
+.jar-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.jar-img {
+  display: block;
+  height: 110px;
+  width: auto;
+}
+
+.jar-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.jar-label {
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.jar-selection {
+  font-family: var(--font-display);
+  font-variation-settings: 'SOFT' 80, 'WONK' 1, 'opsz' 120;
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.jar-options {
+  margin-top: 8px;
+}
+
+.jar-option {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 8px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  border-radius: 0;
+  font-family: var(--font-ui);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.roulette-count {
+  font-family: var(--font-ui);
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 12px 0;
+}
+
 /* Character-mark signature at the bottom of the recipe detail view. */
 .detail-signature {
   display: flex;

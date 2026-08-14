@@ -1006,37 +1006,64 @@ function pillGroup(options, selected, onSelect) {
   return group;
 }
 
-function filterRow(label, values, selected, onSelect) {
-  const wrap = document.createElement("div");
-  wrap.className = "filter-row";
-
-  const lab = document.createElement("div");
-  lab.className = "filter-label";
-  lab.textContent = label;
-  wrap.append(lab);
-
-  const options = values.map((v) => [v, v]).concat([["any", "Any"]]);
-  wrap.append(pillGroup(options, selected, onSelect));
-  return wrap;
+function selectionLabel(options, value) {
+  const found = options.find((opt) => opt[1] === value);
+  return found ? found[0] : "any";
 }
 
-function timeFilterRow() {
-  const wrap = document.createElement("div");
-  wrap.className = "filter-row";
+// Builds one illustrated-jar filter row: jar image + label + current selection,
+// with an options list that expands beneath it. Only one list is open at a time.
+function buildJar(config, updateCount) {
+  const jar = document.createElement("div");
+  jar.className = "jar";
 
-  const lab = document.createElement("div");
-  lab.className = "filter-label";
-  lab.textContent = "Time";
-  wrap.append(lab);
+  const row = document.createElement("div");
+  row.className = "jar-row";
 
-  const options = [["any", "Any"]].concat(ROULETTE_TIMES);
-  wrap.append(
-    pillGroup(options, rouletteState.time, (v) => {
-      rouletteState.time = v;
-      buildRoulette();
-    })
-  );
-  return wrap;
+  const img = document.createElement("img");
+  img.className = "jar-img";
+  img.src = config.img;
+  img.alt = "";
+
+  const info = document.createElement("div");
+  info.className = "jar-info";
+  const labelEl = document.createElement("div");
+  labelEl.className = "jar-label";
+  labelEl.textContent = config.label;
+  const selectionEl = document.createElement("div");
+  selectionEl.className = "jar-selection";
+  selectionEl.textContent = selectionLabel(config.options, config.get());
+  info.append(labelEl, selectionEl);
+
+  row.append(img, info);
+
+  const optionsList = document.createElement("div");
+  optionsList.className = "jar-options";
+  optionsList.hidden = true;
+  config.options.forEach(([label, value]) => {
+    const opt = document.createElement("button");
+    opt.type = "button";
+    opt.className = "jar-option";
+    opt.textContent = label;
+    opt.addEventListener("click", () => {
+      config.set(value);
+      selectionEl.textContent = label;
+      optionsList.hidden = true;
+      updateCount();
+    });
+    optionsList.append(opt);
+  });
+
+  row.addEventListener("click", () => {
+    const willOpen = optionsList.hidden;
+    roulette.querySelectorAll(".jar-options").forEach((o) => {
+      o.hidden = true;
+    });
+    optionsList.hidden = !willOpen;
+  });
+
+  jar.append(row, optionsList);
+  return jar;
 }
 
 function matchingRecipes() {
@@ -1169,29 +1196,74 @@ function buildRoulette() {
   modeRow.className = "filter-row";
   modeRow.append(modeToggle);
 
+  const count = document.createElement("div");
+  count.className = "roulette-count";
+  function updateCount() {
+    count.textContent = matchingRecipes().length + " recipes match";
+  }
+
   const nodes = [back, modeRow];
 
   if (rouletteState.mode === "savoury") {
     nodes.push(
-      filterRow("Protein", ROULETTE_PROTEINS, rouletteState.savouryProtein, (v) => {
-        rouletteState.savouryProtein = v;
-        buildRoulette();
-      }),
-      filterRow("Format", ROULETTE_SAVOURY_FORMATS, rouletteState.savouryFormat, (v) => {
-        rouletteState.savouryFormat = v;
-        buildRoulette();
-      })
+      buildJar(
+        {
+          img: "photos/jar-protein.png",
+          label: "PROTEIN",
+          options: ROULETTE_PROTEINS.map((v) => [v, v]).concat([["any", "any"]]),
+          get: () => rouletteState.savouryProtein,
+          set: (v) => {
+            rouletteState.savouryProtein = v;
+          }
+        },
+        updateCount
+      ),
+      buildJar(
+        {
+          img: "photos/jar-format.png",
+          label: "FORMAT",
+          options: ROULETTE_SAVOURY_FORMATS.map((v) => [v, v]).concat([["any", "any"]]),
+          get: () => rouletteState.savouryFormat,
+          set: (v) => {
+            rouletteState.savouryFormat = v;
+          }
+        },
+        updateCount
+      )
     );
   } else {
     nodes.push(
-      filterRow("Format", ROULETTE_DESSERT_FORMATS, rouletteState.dessertFormat, (v) => {
-        rouletteState.dessertFormat = v;
-        buildRoulette();
-      })
+      buildJar(
+        {
+          img: "photos/jar-protein.png",
+          label: "CATEGORY",
+          options: ROULETTE_DESSERT_FORMATS.map((v) => [v, v]).concat([["any", "any"]]),
+          get: () => rouletteState.dessertFormat,
+          set: (v) => {
+            rouletteState.dessertFormat = v;
+          }
+        },
+        updateCount
+      )
     );
   }
 
-  nodes.push(timeFilterRow());
+  nodes.push(
+    buildJar(
+      {
+        img: "photos/jar-time.png",
+        label: "TIME",
+        options: ROULETTE_TIMES.map(([v, l]) => [l.toLowerCase(), v]).concat([["any", "any"]]),
+        get: () => rouletteState.time,
+        set: (v) => {
+          rouletteState.time = v;
+        }
+      },
+      updateCount
+    )
+  );
+
+  nodes.push(count);
 
   const rollButton = document.createElement("button");
   rollButton.type = "button";
@@ -1204,6 +1276,7 @@ function buildRoulette() {
 
   nodes.push(rollButton, resultArea);
   roulette.append(...nodes);
+  updateCount();
 }
 
 function showRoulette() {
