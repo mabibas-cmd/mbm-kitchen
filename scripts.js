@@ -341,7 +341,7 @@ function showDetail(recipe) {
   detail.style.display = "";
 }
 
-let listFilter = "savoury";
+let listFilter = "all";
 let searchQuery = "";
 let searchOpen = false;
 
@@ -378,6 +378,7 @@ function toggleSearch() {
 function renderTabs() {
   listTabs.innerHTML = "";
   [
+    ["all", "All"],
     ["savoury", "Meals"],
     ["dessert", "Desserts"]
   ].forEach(([type, label]) => {
@@ -407,7 +408,7 @@ function renderTabs() {
 function renderList() {
   list.innerHTML = "";
   const shown = loadStore()
-    .filter((recipe) => recipe.type === listFilter)
+    .filter((recipe) => listFilter === "all" || recipe.type === listFilter)
     .filter((recipe) => matchesSearch(recipe, searchQuery));
   shown.forEach((recipe) => {
     const card = document.createElement("article");
