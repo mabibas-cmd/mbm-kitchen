@@ -477,10 +477,10 @@ function showPostcard(recipe) {
   saveButton.type = "button";
   saveButton.className = "postcard-action";
   saveButton.textContent = "Save image";
-  const shareButton = document.createElement("button");
-  shareButton.type = "button";
-  shareButton.className = "postcard-action";
-  shareButton.textContent = "Share";
+  const shareButton = document.createElement("img");
+  shareButton.className = "postcard-share-img";
+  shareButton.src = "photos/share-envelope.png";
+  shareButton.alt = "Share";
   actions.append(saveButton, shareButton);
 
   saveButton.addEventListener("click", () => savePostcard(card, recipe, saveButton, "Save image"));

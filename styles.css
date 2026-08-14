@@ -311,6 +311,13 @@ button {
   min-height: 44px;
 }
 
+.postcard-share-img {
+  width: 80px;
+  height: auto;
+  min-height: 44px;
+  cursor: pointer;
+}
+
 .postcard {
   width: 1080px;
   box-sizing: border-box;
