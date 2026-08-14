@@ -669,12 +669,19 @@ button {
 }
 
 /* Character-mark signature at the bottom of the recipe detail view. */
+.detail-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 32px;
+}
+
 .detail-signature {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 32px;
 }
 
 .detail-signature-text {

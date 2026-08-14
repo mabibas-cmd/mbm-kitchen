@@ -188,7 +188,6 @@ function showDetail(recipe) {
   langToggle.className = "lang-toggle";
   langToggle.style.display = "flex";
   langToggle.style.gap = "4px";
-  langToggle.style.marginBottom = "0.75rem";
   ["en", "pt", "it"].forEach((code) => {
     const option = document.createElement("button");
     option.type = "button";
@@ -324,6 +323,10 @@ function showDetail(recipe) {
     showPostcard(recipe);
   });
 
+  const footer = document.createElement("div");
+  footer.className = "detail-footer";
+  footer.append(langToggle, signature);
+
   const nodes = [back];
   if (photoEl) nodes.push(photoEl);
   nodes.push(number, title);
@@ -335,11 +338,10 @@ function showDetail(recipe) {
     ingredients,
     stepsHeading,
     steps,
+    shareLink,
     editButton,
     deleteButton,
-    shareLink,
-    langToggle,
-    signature
+    footer
   );
   detail.append(...nodes);
 
