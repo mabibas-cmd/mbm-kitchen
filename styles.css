@@ -396,28 +396,24 @@ button {
   margin: 0 auto 12px;
 }
 
-/* Illustrated-jar filters on the What's for dinner view. */
-.jar {
-  margin-bottom: 16px;
-}
-
-.jar-row {
+/* Illustrated-jar filters on the What's for dinner view: three jars in one row. */
+.jars-row {
   display: flex;
   align-items: flex-end;
-  gap: 16px;
+  justify-content: space-between;
+}
+
+.jar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   cursor: pointer;
 }
 
 .jar-img {
   display: block;
-  height: 110px;
   width: auto;
-}
-
-.jar-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
 }
 
 .jar-label {
@@ -435,7 +431,10 @@ button {
   color: var(--ink);
 }
 
+/* The tapped jar's options appear below the row, left-aligned with it (margin-left
+   set inline) and no wider than 200px. */
 .jar-options {
+  max-width: 200px;
   margin-top: 8px;
 }
 

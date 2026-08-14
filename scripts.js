@@ -1011,61 +1011,6 @@ function selectionLabel(options, value) {
   return found ? found[0] : "any";
 }
 
-// Builds one illustrated-jar filter row: jar image + label + current selection,
-// with an options list that expands beneath it. Only one list is open at a time.
-function buildJar(config, updateCount) {
-  const jar = document.createElement("div");
-  jar.className = "jar";
-
-  const row = document.createElement("div");
-  row.className = "jar-row";
-
-  const img = document.createElement("img");
-  img.className = "jar-img";
-  img.src = config.img;
-  img.alt = "";
-
-  const info = document.createElement("div");
-  info.className = "jar-info";
-  const labelEl = document.createElement("div");
-  labelEl.className = "jar-label";
-  labelEl.textContent = config.label;
-  const selectionEl = document.createElement("div");
-  selectionEl.className = "jar-selection";
-  selectionEl.textContent = selectionLabel(config.options, config.get());
-  info.append(labelEl, selectionEl);
-
-  row.append(img, info);
-
-  const optionsList = document.createElement("div");
-  optionsList.className = "jar-options";
-  optionsList.hidden = true;
-  config.options.forEach(([label, value]) => {
-    const opt = document.createElement("button");
-    opt.type = "button";
-    opt.className = "jar-option";
-    opt.textContent = label;
-    opt.addEventListener("click", () => {
-      config.set(value);
-      selectionEl.textContent = label;
-      optionsList.hidden = true;
-      updateCount();
-    });
-    optionsList.append(opt);
-  });
-
-  row.addEventListener("click", () => {
-    const willOpen = optionsList.hidden;
-    roulette.querySelectorAll(".jar-options").forEach((o) => {
-      o.hidden = true;
-    });
-    optionsList.hidden = !willOpen;
-  });
-
-  jar.append(row, optionsList);
-  return jar;
-}
-
 function matchingRecipes() {
   return loadStore().filter((r) => {
     if (rouletteState.time !== "any" && !(r.totalMinutes < rouletteState.time)) return false;
@@ -1202,68 +1147,114 @@ function buildRoulette() {
     count.textContent = matchingRecipes().length + " recipes match";
   }
 
-  const nodes = [back, modeRow];
+  // The jars sit side by side in one row; a single options area below the row
+  // shows the tapped jar's options, left-aligned with it. Only one open at a time.
+  const jarsRow = document.createElement("div");
+  jarsRow.className = "jars-row";
 
-  if (rouletteState.mode === "savoury") {
-    nodes.push(
-      buildJar(
-        {
-          img: "photos/jar-protein.png",
-          label: "PROTEIN",
-          options: ROULETTE_PROTEINS.map((v) => [v, v]).concat([["any", "any"]]),
-          get: () => rouletteState.savouryProtein,
-          set: (v) => {
-            rouletteState.savouryProtein = v;
-          }
-        },
-        updateCount
-      ),
-      buildJar(
-        {
-          img: "photos/jar-format.png",
-          label: "FORMAT",
-          options: ROULETTE_SAVOURY_FORMATS.map((v) => [v, v]).concat([["any", "any"]]),
-          get: () => rouletteState.savouryFormat,
-          set: (v) => {
-            rouletteState.savouryFormat = v;
-          }
-        },
-        updateCount
-      )
-    );
-  } else {
-    nodes.push(
-      buildJar(
-        {
-          img: "photos/jar-protein.png",
-          label: "CATEGORY",
-          options: ROULETTE_DESSERT_FORMATS.map((v) => [v, v]).concat([["any", "any"]]),
-          get: () => rouletteState.dessertFormat,
-          set: (v) => {
-            rouletteState.dessertFormat = v;
-          }
-        },
-        updateCount
-      )
-    );
+  const optionsArea = document.createElement("div");
+  optionsArea.className = "jar-options-area";
+
+  let openJar = null;
+
+  function openOptions(config, jarEl, selectionEl) {
+    optionsArea.innerHTML = "";
+    const list = document.createElement("div");
+    list.className = "jar-options";
+    config.options.forEach(([label, value]) => {
+      const opt = document.createElement("button");
+      opt.type = "button";
+      opt.className = "jar-option";
+      opt.textContent = label;
+      opt.addEventListener("click", () => {
+        config.set(value);
+        selectionEl.textContent = label;
+        optionsArea.innerHTML = "";
+        openJar = null;
+        updateCount();
+      });
+      list.append(opt);
+    });
+    list.style.marginLeft =
+      jarEl.getBoundingClientRect().left - optionsArea.getBoundingClientRect().left + "px";
+    optionsArea.append(list);
+    openJar = jarEl;
   }
 
-  nodes.push(
-    buildJar(
-      {
-        img: "photos/jar-time.png",
-        label: "TIME",
-        options: ROULETTE_TIMES.map(([v, l]) => [l.toLowerCase(), v]).concat([["any", "any"]]),
-        get: () => rouletteState.time,
-        set: (v) => {
-          rouletteState.time = v;
-        }
-      },
-      updateCount
-    )
-  );
+  function addJar(config) {
+    const jar = document.createElement("div");
+    jar.className = "jar";
 
-  nodes.push(count);
+    const img = document.createElement("img");
+    img.className = "jar-img";
+    img.src = config.img;
+    img.alt = "";
+    img.style.height = config.imgHeight + "px";
+
+    const labelEl = document.createElement("div");
+    labelEl.className = "jar-label";
+    labelEl.textContent = config.label;
+
+    const selectionEl = document.createElement("div");
+    selectionEl.className = "jar-selection";
+    selectionEl.textContent = selectionLabel(config.options, config.get());
+
+    jar.append(img, labelEl, selectionEl);
+    jar.addEventListener("click", () => {
+      if (openJar === jar) {
+        optionsArea.innerHTML = "";
+        openJar = null;
+      } else {
+        openOptions(config, jar, selectionEl);
+      }
+    });
+    jarsRow.append(jar);
+  }
+
+  if (rouletteState.mode === "savoury") {
+    addJar({
+      img: "photos/jar-protein.png",
+      imgHeight: 110,
+      label: "PROTEIN",
+      options: ROULETTE_PROTEINS.map((v) => [v, v]).concat([["any", "any"]]),
+      get: () => rouletteState.savouryProtein,
+      set: (v) => {
+        rouletteState.savouryProtein = v;
+      }
+    });
+    addJar({
+      img: "photos/jar-format.png",
+      imgHeight: 85,
+      label: "FORMAT",
+      options: ROULETTE_SAVOURY_FORMATS.map((v) => [v, v]).concat([["any", "any"]]),
+      get: () => rouletteState.savouryFormat,
+      set: (v) => {
+        rouletteState.savouryFormat = v;
+      }
+    });
+  } else {
+    addJar({
+      img: "photos/jar-protein.png",
+      imgHeight: 110,
+      label: "CATEGORY",
+      options: ROULETTE_DESSERT_FORMATS.map((v) => [v, v]).concat([["any", "any"]]),
+      get: () => rouletteState.dessertFormat,
+      set: (v) => {
+        rouletteState.dessertFormat = v;
+      }
+    });
+  }
+
+  addJar({
+    img: "photos/jar-time.png",
+    imgHeight: 85,
+    label: "TIME",
+    options: ROULETTE_TIMES.map(([v, l]) => [l.toLowerCase(), v]).concat([["any", "any"]]),
+    get: () => rouletteState.time,
+    set: (v) => {
+      rouletteState.time = v;
+    }
+  });
 
   const rollButton = document.createElement("button");
   rollButton.type = "button";
@@ -1274,8 +1265,7 @@ function buildRoulette() {
   const resultArea = document.createElement("div");
   resultArea.id = "roulette-result";
 
-  nodes.push(rollButton, resultArea);
-  roulette.append(...nodes);
+  roulette.append(back, modeRow, jarsRow, optionsArea, count, rollButton, resultArea);
   updateCount();
 }
 
